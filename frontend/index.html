@@ -1,0 +1,1087 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>YouTrade Antifraud</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+/* ── Design tokens ── */
+:root {
+  --bg:         #0d1117;
+  --bg2:        #161b22;
+  --bg3:        #21262d;
+  --bg4:        #2d333b;
+  --border:     #30363d;
+  --border2:    #444c56;
+  --fg:         #cdd9e5;
+  --fg2:        #768390;
+  --fg3:        #444c56;
+  --critical:   #f47067;
+  --high:       #e09b2d;
+  --medium:     #cba6f7;
+  --low:        #57ab5a;
+  --info:       #539bf5;
+  --accent:     #539bf5;
+  --sidebar-w:  220px;
+  color-scheme: dark;
+  font-family: 'Inter', system-ui, sans-serif;
+  font-size: 13px;
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+html, body { margin: 0; height: 100%; background: var(--bg); color: var(--fg); }
+
+/* ── Layout ── */
+#app { display: flex; height: 100vh; overflow: hidden; }
+#app.auth-mode { display: block; }
+
+/* ── Sidebar ── */
+.sidebar {
+  width: var(--sidebar-w); flex-shrink: 0;
+  background: var(--bg2);
+  border-right: 1px solid var(--border);
+  display: flex; flex-direction: column;
+  overflow-y: auto;
+}
+.sidebar-logo {
+  display: flex; align-items: center; gap: 10px;
+  padding: 18px 16px 14px;
+  border-bottom: 1px solid var(--border);
+}
+.logo-icon {
+  width: 28px; height: 28px; border-radius: 7px;
+  background: var(--critical); display: grid; place-items: center;
+  font-weight: 700; font-size: 13px; color: #fff; flex-shrink: 0;
+}
+.logo-text { font-size: 14px; font-weight: 600; color: var(--fg); line-height: 1.2; }
+.logo-sub  { font-size: 11px; color: var(--fg2); }
+
+.nav-section { padding: 10px 8px 4px; }
+.nav-label {
+  font-size: 11px; color: var(--fg3); letter-spacing: .08em;
+  text-transform: uppercase; padding: 0 8px; margin-bottom: 4px;
+}
+.nav-item {
+  display: flex; align-items: center; gap: 9px;
+  padding: 7px 10px; border-radius: 6px;
+  cursor: pointer; color: var(--fg2); font-size: 13px;
+  user-select: none; transition: background .12s, color .12s;
+}
+.nav-item:hover  { background: var(--bg3); color: var(--fg); }
+.nav-item.active { background: var(--bg3); color: var(--fg); font-weight: 500; }
+.nav-item .icon  { width: 16px; text-align: center; flex-shrink: 0; }
+.nav-badge {
+  margin-left: auto; min-width: 18px; height: 18px;
+  background: var(--critical); color: #fff;
+  border-radius: 9px; font-size: 11px; font-weight: 600;
+  display: flex; align-items: center; justify-content: center;
+  padding: 0 5px;
+}
+
+.sidebar-footer {
+  margin-top: auto; border-top: 1px solid var(--border);
+  padding: 12px 8px;
+}
+.user-row {
+  display: flex; align-items: center; gap: 9px;
+  padding: 6px 8px; border-radius: 6px;
+}
+.avatar {
+  width: 26px; height: 26px; border-radius: 50%;
+  background: var(--info); display: grid; place-items: center;
+  font-size: 11px; font-weight: 700; color: #fff; flex-shrink: 0;
+}
+.user-name  { font-size: 13px; font-weight: 500; }
+.user-role  { font-size: 11px; color: var(--fg2); }
+.logout-btn {
+  margin-left: auto; background: none; border: none;
+  color: var(--fg2); cursor: pointer; font-size: 15px; padding: 2px 4px;
+  border-radius: 4px;
+}
+.logout-btn:hover { color: var(--critical); background: var(--bg3); }
+
+/* ── Main area ── */
+.main {
+  flex: 1; overflow-y: auto; overflow-x: hidden;
+  display: flex; flex-direction: column;
+}
+.topbar {
+  position: sticky; top: 0; z-index: 10;
+  background: var(--bg);
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; gap: 12px;
+  padding: 12px 24px;
+}
+.topbar h1 { font-size: 16px; font-weight: 600; margin: 0; }
+.topbar-actions { margin-left: auto; display: flex; gap: 8px; }
+
+.content { padding: 24px; flex: 1; }
+
+/* ── Login ── */
+.login-wrap {
+  min-height: 100vh; display: flex; align-items: center; justify-content: center;
+  background: var(--bg);
+}
+.login-box {
+  width: 360px; background: var(--bg2);
+  border: 1px solid var(--border); border-radius: 12px; padding: 32px;
+}
+.login-logo { text-align: center; margin-bottom: 24px; }
+.login-logo .logo-icon { width: 44px; height: 44px; border-radius: 10px; font-size: 20px; margin: 0 auto 10px; }
+.login-logo h2 { font-size: 18px; font-weight: 700; margin: 0 0 4px; }
+.login-logo p  { font-size: 13px; color: var(--fg2); margin: 0; }
+
+/* ── Forms ── */
+.field { margin-bottom: 14px; }
+.field label { display: block; font-size: 12px; color: var(--fg2); margin-bottom: 5px; font-weight: 500; }
+.field input, .field select, .field textarea {
+  width: 100%; padding: 8px 12px; background: var(--bg3);
+  border: 1px solid var(--border); border-radius: 7px;
+  color: var(--fg); font-family: inherit; font-size: 13px;
+  outline: none; transition: border-color .15s;
+}
+.field input:focus, .field select:focus, .field textarea:focus { border-color: var(--accent); }
+.field textarea { resize: vertical; min-height: 70px; }
+
+/* ── Buttons ── */
+.btn {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 7px 14px; border-radius: 7px; border: 1px solid;
+  font-size: 13px; font-weight: 500; cursor: pointer;
+  font-family: inherit; transition: opacity .12s, background .12s;
+  user-select: none;
+}
+.btn:disabled { opacity: .45; cursor: not-allowed; }
+.btn-primary {
+  background: var(--accent); border-color: var(--accent); color: #fff;
+}
+.btn-primary:hover:not(:disabled) { opacity: .85; }
+.btn-secondary {
+  background: var(--bg3); border-color: var(--border2); color: var(--fg);
+}
+.btn-secondary:hover:not(:disabled) { background: var(--bg4); }
+.btn-danger {
+  background: rgba(244,112,103,.12); border-color: var(--critical); color: var(--critical);
+}
+.btn-danger:hover:not(:disabled) { background: rgba(244,112,103,.22); }
+.btn-sm { padding: 4px 10px; font-size: 12px; }
+.btn-full { width: 100%; justify-content: center; }
+
+/* ── KPI tiles ── */
+.kpi-row { display: grid; grid-template-columns: repeat(auto-fit,minmax(150px,1fr)); gap: 12px; margin-bottom: 24px; }
+.kpi {
+  background: var(--bg2); border: 1px solid var(--border);
+  border-radius: 10px; padding: 16px 18px;
+}
+.kpi-label { font-size: 11px; color: var(--fg2); letter-spacing: .04em; text-transform: uppercase; margin-bottom: 6px; }
+.kpi-value { font-size: 26px; font-weight: 700; line-height: 1; font-variant-numeric: tabular-nums; }
+.kpi-sub   { font-size: 12px; color: var(--fg2); margin-top: 4px; }
+
+/* ── Tables ── */
+.table-wrap { overflow-x: auto; border-radius: 10px; border: 1px solid var(--border); }
+table { width: 100%; border-collapse: collapse; }
+thead th {
+  background: var(--bg2); font-size: 11px; color: var(--fg2);
+  letter-spacing: .05em; text-transform: uppercase;
+  text-align: left; padding: 10px 14px;
+  border-bottom: 1px solid var(--border); white-space: nowrap;
+}
+tbody td {
+  padding: 11px 14px; border-bottom: 1px solid var(--border);
+  vertical-align: middle; background: var(--bg2);
+}
+tbody tr:last-child td { border-bottom: none; }
+tbody tr:hover td { background: var(--bg3); cursor: pointer; }
+.mono { font-family: 'JetBrains Mono', monospace; font-size: 12px; color: var(--info); }
+
+/* ── Badges ── */
+.badge {
+  display: inline-flex; align-items: center; gap: 5px;
+  font-size: 11px; font-weight: 600; padding: 3px 8px; border-radius: 6px;
+}
+.badge.critical { color: var(--critical); background: rgba(244,112,103,.12); }
+.badge.high     { color: var(--high);     background: rgba(224,155,45,.12); }
+.badge.medium   { color: var(--medium);   background: rgba(203,166,247,.12); }
+.badge.low      { color: var(--low);      background: rgba(87,171,90,.12); }
+.badge.new      { color: var(--info);     background: rgba(83,155,245,.12); }
+.badge.in_review{ color: var(--high);     background: rgba(224,155,45,.12); }
+.badge.confirmed{ color: var(--critical); background: rgba(244,112,103,.12); }
+.badge.false_positive { color: var(--fg2); background: var(--bg3); }
+.badge.closed   { color: var(--fg3);     background: var(--bg3); }
+.badge.active   { color: var(--low);     background: rgba(87,171,90,.12); }
+.badge.blocked  { color: var(--critical);background: rgba(244,112,103,.12); }
+.badge.funded   { color: var(--info);    background: rgba(83,155,245,.12); }
+
+/* ── Score bar ── */
+.score-cell { display: flex; align-items: center; gap: 8px; }
+.score-bar  { flex: 1; max-width: 80px; height: 5px; background: var(--bg3); border-radius: 99px; overflow: hidden; }
+.score-fill { height: 100%; border-radius: 99px; }
+
+/* ── Detail panel (slide-in) ── */
+.panel-overlay {
+  position: fixed; inset: 0; background: rgba(0,0,0,.5);
+  z-index: 100; display: none;
+}
+.panel-overlay.open { display: block; }
+.panel {
+  position: fixed; top: 0; right: 0; bottom: 0;
+  width: 480px; max-width: 100vw;
+  background: var(--bg2); border-left: 1px solid var(--border);
+  overflow-y: auto; padding: 24px;
+  transform: translateX(100%); transition: transform .22s ease;
+  z-index: 101;
+}
+.panel.open { transform: translateX(0); }
+.panel-header {
+  display: flex; align-items: flex-start; justify-content: space-between;
+  margin-bottom: 20px; gap: 12px;
+}
+.panel-close {
+  background: none; border: none; color: var(--fg2);
+  font-size: 20px; cursor: pointer; padding: 2px 6px; border-radius: 5px; flex-shrink: 0;
+}
+.panel-close:hover { background: var(--bg3); color: var(--fg); }
+.panel-title { font-size: 15px; font-weight: 600; margin: 0 0 4px; }
+.panel-sub   { font-size: 12px; color: var(--fg2); margin: 0; }
+
+.detail-row { display: flex; justify-content: space-between; align-items: center; padding: 9px 0; border-bottom: 1px solid var(--border); }
+.detail-row:last-child { border-bottom: none; }
+.detail-key   { font-size: 12px; color: var(--fg2); }
+.detail-value { font-size: 13px; font-weight: 500; text-align: right; max-width: 60%; word-break: break-all; }
+
+/* ── Filter bar ── */
+.filter-bar { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; }
+.filter-bar select {
+  padding: 6px 10px; background: var(--bg2);
+  border: 1px solid var(--border); border-radius: 7px;
+  color: var(--fg); font-family: inherit; font-size: 12px; outline: none; cursor: pointer;
+}
+.filter-bar select:focus { border-color: var(--accent); }
+
+/* ── Toast ── */
+#toast {
+  position: fixed; bottom: 24px; right: 24px; z-index: 200;
+  display: flex; flex-direction: column; gap: 8px;
+}
+.toast-item {
+  padding: 10px 16px; border-radius: 8px; font-size: 13px;
+  animation: slideup .18s ease;
+  border-left: 3px solid;
+}
+.toast-item.success { background: var(--bg2); border-color: var(--low); color: var(--fg); }
+.toast-item.error   { background: var(--bg2); border-color: var(--critical); color: var(--fg); }
+@keyframes slideup { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:translateY(0); } }
+
+/* ── Misc ── */
+.section-title { font-size: 14px; font-weight: 600; margin: 0 0 14px; }
+.empty-state   { text-align: center; padding: 48px 24px; color: var(--fg2); }
+.empty-state .icon { font-size: 32px; margin-bottom: 10px; }
+.divider       { border: none; border-top: 1px solid var(--border); margin: 16px 0; }
+.chip {
+  display: inline-block; font-size: 11px; padding: 2px 7px;
+  background: var(--bg3); border: 1px solid var(--border2);
+  border-radius: 5px; color: var(--fg2);
+}
+.error-banner {
+  background: rgba(244,112,103,.1); border: 1px solid var(--critical);
+  border-radius: 7px; padding: 10px 14px; color: var(--critical);
+  font-size: 13px; margin-bottom: 14px; display: none;
+}
+</style>
+</head>
+<body>
+
+<!-- ── Toast container ── -->
+<div id="toast"></div>
+
+<!-- ── Panel overlay ── -->
+<div class="panel-overlay" id="overlay" onclick="closePanel()"></div>
+<div class="panel" id="panel">
+  <div id="panelContent"></div>
+</div>
+
+<!-- ── Root ── -->
+<div id="app"></div>
+
+<script>
+// ═══════════════════════════════════════════════════════════
+// CONFIG
+// ═══════════════════════════════════════════════════════════
+const API = 'http://localhost:8000';
+
+// ═══════════════════════════════════════════════════════════
+// AUTH STATE
+// ═══════════════════════════════════════════════════════════
+let token = '';
+let me = null;
+
+function saveToken(t) { token = t; try { localStorage.setItem('af_token', t); } catch {} }
+function loadToken()  { try { token = localStorage.getItem('af_token') || ''; } catch {} }
+function clearToken() { token = ''; try { localStorage.removeItem('af_token'); } catch {} }
+
+// ═══════════════════════════════════════════════════════════
+// API HELPERS
+// ═══════════════════════════════════════════════════════════
+async function api(method, path, body) {
+  const res = await fetch(API + path, {
+    method,
+    headers: {
+      'Content-Type': 'application/json',
+      ...(token ? { Authorization: 'Bearer ' + token } : {}),
+    },
+    body: body ? JSON.stringify(body) : undefined,
+  });
+  if (res.status === 401) { clearToken(); render(); return null; }
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.detail || `HTTP ${res.status}`);
+  }
+  return res.status === 204 ? null : res.json();
+}
+
+async function apiForm(path, data) {
+  const res = await fetch(API + path, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: new URLSearchParams(data),
+  });
+  if (!res.ok) throw new Error((await res.json().catch(() => ({}))).detail || 'Auth error');
+  return res.json();
+}
+
+// ═══════════════════════════════════════════════════════════
+// TOAST
+// ═══════════════════════════════════════════════════════════
+function toast(msg, type = 'success') {
+  const el = document.createElement('div');
+  el.className = `toast-item ${type}`;
+  el.textContent = msg;
+  document.getElementById('toast').appendChild(el);
+  setTimeout(() => el.remove(), 3200);
+}
+
+// ═══════════════════════════════════════════════════════════
+// PANEL
+// ═══════════════════════════════════════════════════════════
+function openPanel(html) {
+  document.getElementById('panelContent').innerHTML = html;
+  document.getElementById('overlay').classList.add('open');
+  document.getElementById('panel').classList.add('open');
+}
+function closePanel() {
+  document.getElementById('overlay').classList.remove('open');
+  document.getElementById('panel').classList.remove('open');
+}
+
+// ═══════════════════════════════════════════════════════════
+// HELPERS
+// ═══════════════════════════════════════════════════════════
+const levelColor = { critical: 'var(--critical)', high: 'var(--high)', medium: 'var(--medium)', low: 'var(--low)' };
+const typeLabel = {
+  trading_robot: 'Trading Robot', multiaccounting: 'Multi-Accounting',
+  group_trading: 'Group Trading', news_trading: 'News Trading',
+  lucky_strategy: 'Lucky Strategy', margin_overuse: 'Margin Overuse',
+  hedge_between_accounts: 'Hedge', promo_abuse: 'Promo Abuse',
+  latency_arbitrage: 'Latency Arb', payment_fraud: 'Payment Fraud',
+};
+const statusLabel = { new: 'New', in_review: 'In Review', confirmed: 'Confirmed', false_positive: 'False Positive', closed: 'Closed' };
+const catLabel    = { hard: 'Hard', soft: 'Soft', risk_pattern: 'Risk Pattern' };
+
+function badge(val, cls) {
+  return `<span class="badge ${cls || val}">${val.replace(/_/g,' ')}</span>`;
+}
+function reltime(iso) {
+  if (!iso) return '—';
+  const d = Math.floor((Date.now() - new Date(iso)) / 86400000);
+  return d === 0 ? 'today' : `${d}d ago`;
+}
+function fmt(iso) {
+  if (!iso) return '—';
+  return new Date(iso).toLocaleString('ru-RU', { day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit' });
+}
+function scoreColor(s) {
+  if (s >= 75) return 'var(--critical)';
+  if (s >= 50) return 'var(--high)';
+  if (s >= 25) return 'var(--medium)';
+  return 'var(--low)';
+}
+
+// ═══════════════════════════════════════════════════════════
+// ROUTER
+// ═══════════════════════════════════════════════════════════
+let currentPage = 'dashboard';
+
+function navigate(page) {
+  currentPage = page;
+  renderApp();
+}
+
+// ═══════════════════════════════════════════════════════════
+// RENDER ROOT
+// ═══════════════════════════════════════════════════════════
+async function render() {
+  loadToken();
+  if (!token) { renderLogin(); return; }
+  if (!me) {
+    try { me = await api('GET', '/api/v1/users/me'); }
+    catch { clearToken(); renderLogin(); return; }
+  }
+  renderApp();
+}
+
+// ═══════════════════════════════════════════════════════════
+// LOGIN PAGE
+// ═══════════════════════════════════════════════════════════
+function renderLogin() {
+  const app = document.getElementById('app');
+  app.className = 'auth-mode';
+  app.innerHTML = `
+    <div class="login-wrap">
+      <div class="login-box">
+        <div class="login-logo">
+          <div class="logo-icon">YT</div>
+          <h2>YouTrade Antifraud</h2>
+          <p>Система антифрода · Risk Manager</p>
+        </div>
+        <div class="error-banner" id="loginErr"></div>
+        <div class="field">
+          <label>Email</label>
+          <input id="loginEmail" type="email" value="admin@youtrade.com" autocomplete="username">
+        </div>
+        <div class="field">
+          <label>Пароль</label>
+          <input id="loginPass" type="password" value="Admin1234!" autocomplete="current-password">
+        </div>
+        <button class="btn btn-primary btn-full" id="loginBtn" onclick="doLogin()">Войти</button>
+      </div>
+    </div>`;
+  document.getElementById('loginPass').addEventListener('keydown', e => { if (e.key === 'Enter') doLogin(); });
+}
+
+async function doLogin() {
+  const btn = document.getElementById('loginBtn');
+  const err = document.getElementById('loginErr');
+  btn.disabled = true; btn.textContent = 'Вход…';
+  err.style.display = 'none';
+  try {
+    const data = await apiForm('/api/v1/users/login', {
+      username: document.getElementById('loginEmail').value,
+      password: document.getElementById('loginPass').value,
+    });
+    saveToken(data.access_token);
+    me = await api('GET', '/api/v1/users/me');
+    renderApp();
+  } catch (e) {
+    err.textContent = e.message; err.style.display = 'block';
+    btn.disabled = false; btn.textContent = 'Войти';
+  }
+}
+
+// ═══════════════════════════════════════════════════════════
+// APP SHELL
+// ═══════════════════════════════════════════════════════════
+let alertsBadge = 0;
+
+function renderApp() {
+  const app = document.getElementById('app');
+  app.className = '';
+  const initials = (me?.full_name || me?.email || 'U').slice(0,2).toUpperCase();
+  app.innerHTML = `
+    <nav class="sidebar">
+      <div class="sidebar-logo">
+        <div class="logo-icon">YT</div>
+        <div>
+          <div class="logo-text">Antifraud</div>
+          <div class="logo-sub">YouTrade</div>
+        </div>
+      </div>
+      <div class="nav-section">
+        <div class="nav-label">Обзор</div>
+        <div class="nav-item ${currentPage==='dashboard'?'active':''}" onclick="navigate('dashboard')">
+          <span class="icon">◈</span> Дашборд
+        </div>
+      </div>
+      <div class="nav-section">
+        <div class="nav-label">Работа</div>
+        <div class="nav-item ${currentPage==='alerts'?'active':''}" onclick="navigate('alerts')">
+          <span class="icon">⚠</span> Алерты
+          <span class="nav-badge" id="navBadge" style="display:none">0</span>
+        </div>
+        <div class="nav-item ${currentPage==='accounts'?'active':''}" onclick="navigate('accounts')">
+          <span class="icon">◎</span> Аккаунты
+        </div>
+        <div class="nav-item ${currentPage==='graph'?'active':''}" onclick="navigate('graph')">
+          <span class="icon">⬡</span> Граф связей
+        </div>
+      </div>
+      <div class="nav-section">
+        <div class="nav-label">Настройки</div>
+        <div class="nav-item ${currentPage==='rules'?'active':''}" onclick="navigate('rules')">
+          <span class="icon">◧</span> Правила
+        </div>
+      </div>
+      <div class="sidebar-footer">
+        <div class="user-row">
+          <div class="avatar">${initials}</div>
+          <div>
+            <div class="user-name">${me?.full_name || me?.email}</div>
+            <div class="user-role">${me?.role || 'admin'}</div>
+          </div>
+          <button class="logout-btn" onclick="doLogout()" title="Выйти">⎋</button>
+        </div>
+      </div>
+    </nav>
+    <div class="main" id="mainArea">
+      <div class="content" id="pageContent">
+        <div class="empty-state"><div class="icon">⟳</div>Загрузка…</div>
+      </div>
+    </div>`;
+  loadPage();
+}
+
+function doLogout() { clearToken(); me = null; renderLogin(); }
+
+// ═══════════════════════════════════════════════════════════
+// PAGE LOADER
+// ═══════════════════════════════════════════════════════════
+async function loadPage() {
+  const pages = { dashboard: pageDashboard, alerts: pageAlerts, accounts: pageAccounts, rules: pageRules, graph: pageGraph };
+  const fn = pages[currentPage] || pageDashboard;
+  await fn();
+}
+
+// ═══════════════════════════════════════════════════════════
+// DASHBOARD
+// ═══════════════════════════════════════════════════════════
+async function pageDashboard() {
+  setTopbar('Дашборд');
+  const [dash, alerts] = await Promise.all([
+    api('GET', '/api/v1/reports/dashboard?days=30'),
+    api('GET', '/api/v1/alerts?limit=5'),
+  ]);
+  if (!dash) return;
+
+  const newCount = alerts?.filter(a => a.status === 'new').length || 0;
+  const critCount = alerts?.filter(a => a.risk_level === 'critical').length || 0;
+
+  const typeRows = Object.entries(dash.alerts_by_type || {})
+    .sort((a,b) => b[1]-a[1])
+    .map(([k,v]) => `
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid var(--border)">
+        <span>${typeLabel[k] || k}</span>
+        <span style="font-weight:600;color:${v>1?'var(--critical)':'var(--high)'}">${v}</span>
+      </div>`).join('');
+
+  const recentRows = (alerts||[]).map(a => `
+    <div class="detail-row" style="cursor:pointer" onclick="openAlertDetail(${a.id})">
+      <div>
+        <div style="font-size:13px;font-weight:500">${typeLabel[a.violation_type]||a.violation_type}</div>
+        <div style="font-size:11px;color:var(--fg2)">Account #${a.account_id} · ${reltime(a.created_at)}</div>
+      </div>
+      <div style="display:flex;gap:6px;align-items:center">
+        ${badge(a.risk_level)} ${badge(a.status)}
+      </div>
+    </div>`).join('');
+
+  document.getElementById('pageContent').innerHTML = `
+    <div class="kpi-row">
+      <div class="kpi">
+        <div class="kpi-label">Всего алертов</div>
+        <div class="kpi-value" style="color:var(--critical)">${dash.total_alerts}</div>
+        <div class="kpi-sub">за 30 дней</div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-label">Hard-нарушений</div>
+        <div class="kpi-value" style="color:var(--critical)">${dash.alerts_by_category?.hard||0}</div>
+        <div class="kpi-sub">бот · мультиак · группа</div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-label">Новых алертов</div>
+        <div class="kpi-value" style="color:var(--info)">${newCount}</div>
+        <div class="kpi-sub">требуют проверки</div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-label">False Positive</div>
+        <div class="kpi-value" style="color:var(--medium)">${dash.false_positive_rate_pct}%</div>
+        <div class="kpi-sub">от закрытых кейсов</div>
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+      <div style="background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:18px">
+        <div class="section-title">Нарушения по типам</div>
+        ${typeRows || '<div class="empty-state">Нет данных</div>'}
+      </div>
+      <div style="background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:18px">
+        <div class="section-title">Последние алерты</div>
+        ${recentRows || '<div class="empty-state">Алертов нет</div>'}
+        <div style="margin-top:12px">
+          <button class="btn btn-secondary btn-sm" onclick="navigate('alerts')">Все алерты →</button>
+        </div>
+      </div>
+    </div>`;
+}
+
+// ═══════════════════════════════════════════════════════════
+// ALERTS
+// ═══════════════════════════════════════════════════════════
+let alertFilters = { status: '', risk_level: '' };
+
+async function pageAlerts() {
+  setTopbar('Алерты', `<button class="btn btn-secondary btn-sm" onclick="pageAlerts()">↻ Обновить</button>`);
+  const q = new URLSearchParams({ limit: '100' });
+  if (alertFilters.status) q.set('status', alertFilters.status);
+  if (alertFilters.risk_level) q.set('risk_level', alertFilters.risk_level);
+  const alerts = await api('GET', '/api/v1/alerts?' + q) || [];
+
+  const newCount = alerts.filter(a => a.status === 'new').length;
+  const nb = document.getElementById('navBadge');
+  if (nb) { nb.textContent = newCount; nb.style.display = newCount ? '' : 'none'; }
+
+  const rows = alerts.map(a => `
+    <tr onclick="openAlertDetail(${a.id})" title="Открыть детали">
+      <td><span class="mono">#${a.id}</span></td>
+      <td>${typeLabel[a.violation_type]||a.violation_type}</td>
+      <td>${badge(a.category)}</td>
+      <td>${badge(a.risk_level)}</td>
+      <td>${badge(a.status)}</td>
+      <td style="color:var(--fg2);font-size:12px">${reltime(a.created_at)}</td>
+      <td onclick="event.stopPropagation()">
+        <div style="display:flex;gap:6px">
+          ${a.status === 'new' || a.status === 'in_review' ? `
+            <button class="btn btn-sm btn-danger" onclick="quickUpdateAlert(${a.id},'confirmed')">✓ Confirm</button>
+            <button class="btn btn-sm btn-secondary" onclick="quickUpdateAlert(${a.id},'false_positive')">✗ FP</button>
+          ` : ''}
+        </div>
+      </td>
+    </tr>`).join('');
+
+  document.getElementById('pageContent').innerHTML = `
+    <div class="filter-bar">
+      <select onchange="alertFilters.status=this.value;pageAlerts()">
+        <option value="">Все статусы</option>
+        <option value="new" ${alertFilters.status==='new'?'selected':''}>Новые</option>
+        <option value="in_review" ${alertFilters.status==='in_review'?'selected':''}>На проверке</option>
+        <option value="confirmed" ${alertFilters.status==='confirmed'?'selected':''}>Подтверждено</option>
+        <option value="false_positive" ${alertFilters.status==='false_positive'?'selected':''}>False Positive</option>
+        <option value="closed" ${alertFilters.status==='closed'?'selected':''}>Закрыто</option>
+      </select>
+      <select onchange="alertFilters.risk_level=this.value;pageAlerts()">
+        <option value="">Все уровни</option>
+        <option value="critical" ${alertFilters.risk_level==='critical'?'selected':''}>Critical</option>
+        <option value="high" ${alertFilters.risk_level==='high'?'selected':''}>High</option>
+        <option value="medium" ${alertFilters.risk_level==='medium'?'selected':''}>Medium</option>
+        <option value="low" ${alertFilters.risk_level==='low'?'selected':''}>Low</option>
+      </select>
+      <span style="margin-left:auto;color:var(--fg2);font-size:12px;align-self:center">${alerts.length} алертов</span>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr>
+          <th>#</th><th>Тип нарушения</th><th>Категория</th>
+          <th>Уровень</th><th>Статус</th><th>Создан</th><th>Действия</th>
+        </tr></thead>
+        <tbody>${rows || '<tr><td colspan="7"><div class="empty-state"><div class="icon">✓</div>Алертов нет</div></td></tr>'}</tbody>
+      </table>
+    </div>`;
+}
+
+async function openAlertDetail(id) {
+  const a = await api('GET', `/api/v1/alerts/${id}`);
+  if (!a) return;
+  openPanel(`
+    <div class="panel-header">
+      <div>
+        <div class="panel-title">${typeLabel[a.violation_type]||a.violation_type}</div>
+        <div class="panel-sub">Alert #${a.id} · Account #${a.account_id}</div>
+      </div>
+      <button class="panel-close" onclick="closePanel()">✕</button>
+    </div>
+    <div style="display:flex;gap:8px;margin-bottom:20px;flex-wrap:wrap">
+      ${badge(a.risk_level)} ${badge(a.status)} ${badge(a.category)}
+    </div>
+    <div style="margin-bottom:20px">
+      <div class="detail-row"><span class="detail-key">Account ID</span><span class="detail-value mono">#${a.account_id}</span></div>
+      <div class="detail-row"><span class="detail-key">Категория</span><span class="detail-value">${catLabel[a.category]||a.category}</span></div>
+      <div class="detail-row"><span class="detail-key">ML Score</span><span class="detail-value">${a.ml_score!=null?a.ml_score.toFixed(2):'—'}</span></div>
+      <div class="detail-row"><span class="detail-key">Создан</span><span class="detail-value">${fmt(a.created_at)}</span></div>
+    </div>
+    ${a.details ? `
+      <div class="section-title">Детали</div>
+      <pre style="font-size:11px;color:var(--fg2);overflow-x:auto;background:var(--bg3);padding:12px;border-radius:7px;margin:0 0 20px">${JSON.stringify(a.details,null,2)}</pre>
+    ` : ''}
+    <div class="section-title">Изменить статус</div>
+    <div class="field">
+      <label>Новый статус</label>
+      <select id="newStatus">
+        <option value="new">New</option>
+        <option value="in_review">In Review</option>
+        <option value="confirmed">Confirmed</option>
+        <option value="false_positive">False Positive</option>
+        <option value="closed">Closed</option>
+      </select>
+    </div>
+    <div class="field">
+      <label>Комментарий</label>
+      <textarea id="statusComment" placeholder="Опишите решение…"></textarea>
+    </div>
+    <div style="display:flex;gap:8px">
+      <button class="btn btn-primary" onclick="saveAlertStatus(${id})">Сохранить</button>
+      <button class="btn btn-secondary" onclick="closePanel()">Отмена</button>
+    </div>`);
+  document.getElementById('newStatus').value = a.status;
+}
+
+async function saveAlertStatus(id) {
+  const status = document.getElementById('newStatus').value;
+  const comment = document.getElementById('statusComment').value;
+  try {
+    await api('PATCH', `/api/v1/alerts/${id}`, { status, comment });
+    toast('Статус алерта обновлён');
+    closePanel();
+    pageAlerts();
+  } catch(e) { toast(e.message, 'error'); }
+}
+
+async function quickUpdateAlert(id, status) {
+  try {
+    await api('PATCH', `/api/v1/alerts/${id}`, { status });
+    toast(status === 'confirmed' ? 'Алерт подтверждён' : 'Отмечен как False Positive');
+    pageAlerts();
+  } catch(e) { toast(e.message, 'error'); }
+}
+
+// ═══════════════════════════════════════════════════════════
+// ACCOUNTS
+// ═══════════════════════════════════════════════════════════
+const TEST_ACCOUNTS = [
+  {id:7,login:'ACC001',client_id:7,account_type:'challenge',status:'active'},
+  {id:8,login:'ACC002',client_id:7,account_type:'funded',status:'active'},
+  {id:11,login:'ACC003',client_id:8,account_type:'challenge',status:'active'},
+  {id:12,login:'ACC004',client_id:9,account_type:'challenge',status:'active'},
+  {id:13,login:'ACC005',client_id:10,account_type:'funded',status:'active'},
+  {id:14,login:'ACC006',client_id:11,account_type:'challenge',status:'blocked'},
+  {id:15,login:'ACC007',client_id:12,account_type:'funded',status:'active'},
+  {id:16,login:'ACC008',client_id:8,account_type:'funded',status:'active'},
+];
+const SCORES_MAP = {7:18,8:5,11:85,12:65,13:42,14:92,15:68,16:81};
+const LEVEL_MAP  = {7:'low',8:'low',11:'critical',12:'high',13:'medium',14:'critical',15:'high',16:'critical'};
+
+async function pageAccounts() {
+  setTopbar('Аккаунты');
+  const rows = TEST_ACCOUNTS.map(a => {
+    const sc = SCORES_MAP[a.id] || 0;
+    const lv = LEVEL_MAP[a.id] || 'low';
+    const col = scoreColor(sc);
+    return `
+      <tr onclick="openAccountDetail(${a.id},'${a.login}')">
+        <td><span class="mono">${a.login}</span></td>
+        <td><span class="chip">${a.account_type}</span></td>
+        <td>${badge(a.status)}</td>
+        <td>
+          <div class="score-cell">
+            <span style="font-weight:600;color:${col};font-variant-numeric:tabular-nums">${sc}</span>
+            <div class="score-bar"><div class="score-fill" style="width:${sc}%;background:${col}"></div></div>
+          </div>
+        </td>
+        <td>${badge(lv)}</td>
+        <td><button class="btn btn-sm btn-secondary" onclick="event.stopPropagation();navigate('graph')">Граф</button></td>
+      </tr>`;
+  }).join('');
+
+  document.getElementById('pageContent').innerHTML = `
+    <div class="table-wrap">
+      <table>
+        <thead><tr>
+          <th>Login</th><th>Тип</th><th>Статус</th>
+          <th>Risk Score</th><th>Уровень</th><th></th>
+        </tr></thead>
+        <tbody>${rows}</tbody>
+      </table>
+    </div>`;
+}
+
+async function openAccountDetail(id, login) {
+  const [score, tradesRaw] = await Promise.all([
+    api('GET', `/api/v1/scoring/${id}/current`).catch(() => null),
+    api('GET', `/api/v1/accounts/${login}/trades`).catch(() => []),
+  ]);
+  const trades = tradesRaw || [];
+  const sc = score?.score || SCORES_MAP[id] || 0;
+  const lv = score?.risk_level || LEVEL_MAP[id] || 'low';
+  const col = scoreColor(sc);
+
+  const breakdown = score?.score_breakdown || {};
+  const bdRows = Object.entries(breakdown).map(([k,v]) => `
+    <div class="detail-row">
+      <span class="detail-key">${k}</span>
+      <span class="detail-value" style="color:var(--fg)">${v} pts</span>
+    </div>`).join('');
+
+  const tradeRows = trades.slice(0,10).map(t => `
+    <tr>
+      <td style="font-size:12px">${t.symbol}</td>
+      <td>${badge(t.direction, t.direction==='buy'?'low':'high')}</td>
+      <td style="font-variant-numeric:tabular-nums;font-size:12px">${t.volume}</td>
+      <td style="font-variant-numeric:tabular-nums;font-size:12px;color:${parseFloat(t.profit)>=0?'var(--low)':'var(--critical)'}">${parseFloat(t.profit||0).toFixed(2)}</td>
+      <td style="font-size:11px;color:var(--fg2)">${reltime(t.open_time)}</td>
+    </tr>`).join('');
+
+  openPanel(`
+    <div class="panel-header">
+      <div>
+        <div class="panel-title">Аккаунт ${login}</div>
+        <div class="panel-sub">ID: ${id}</div>
+      </div>
+      <button class="panel-close" onclick="closePanel()">✕</button>
+    </div>
+    <div style="display:flex;align-items:center;gap:12px;padding:14px;background:var(--bg3);border-radius:8px;margin-bottom:20px">
+      <div style="font-size:36px;font-weight:700;color:${col};font-variant-numeric:tabular-nums">${sc}</div>
+      <div>
+        <div>${badge(lv)}</div>
+        <div style="font-size:12px;color:var(--fg2);margin-top:4px">Risk Score</div>
+      </div>
+    </div>
+    ${bdRows ? `<div class="section-title">Компоненты скора</div><div style="margin-bottom:20px">${bdRows}</div>` : ''}
+    <div class="section-title">Последние сделки ${trades.length > 10 ? '(10 из ' + trades.length + ')' : ''}</div>
+    ${tradeRows ? `
+      <div class="table-wrap" style="margin-bottom:12px">
+        <table>
+          <thead><tr><th>Symbol</th><th>Dir</th><th>Vol</th><th>P&L</th><th>Дата</th></tr></thead>
+          <tbody>${tradeRows}</tbody>
+        </table>
+      </div>` : '<div class="empty-state">Сделок нет</div>'}
+    <button class="btn btn-secondary btn-sm" onclick="closePanel();navigate('graph')">Показать граф связей</button>`);
+}
+
+// ═══════════════════════════════════════════════════════════
+// RULES
+// ═══════════════════════════════════════════════════════════
+async function pageRules() {
+  setTopbar('Правила детектора',
+    `<button class="btn btn-primary btn-sm" onclick="openCreateRule()">+ Добавить правило</button>`);
+  const rules = await api('GET', '/api/v1/rules') || [];
+
+  const rows = rules.map(r => `
+    <tr onclick="openRuleDetail(${r.id})">
+      <td><span style="font-weight:500">${r.name}</span></td>
+      <td>${badge(r.category)}</td>
+      <td><span class="chip">${(typeLabel[r.violation_type]||r.violation_type)}</span></td>
+      <td>
+        <span class="badge ${r.is_active?'active':'blocked'}">${r.is_active?'Активно':'Выключено'}</span>
+      </td>
+      <td style="color:var(--fg2);font-size:12px">v${r.version}</td>
+      <td onclick="event.stopPropagation()">
+        <button class="btn btn-sm btn-secondary" onclick="toggleRule(${r.id},${r.is_active})">
+          ${r.is_active?'Выкл.':'Вкл.'}
+        </button>
+      </td>
+    </tr>`).join('');
+
+  document.getElementById('pageContent').innerHTML = `
+    <div class="table-wrap">
+      <table>
+        <thead><tr>
+          <th>Название</th><th>Категория</th><th>Тип</th>
+          <th>Статус</th><th>Версия</th><th></th>
+        </tr></thead>
+        <tbody>${rows||'<tr><td colspan="6"><div class="empty-state">Правил нет</div></td></tr>'}</tbody>
+      </table>
+    </div>`;
+}
+
+async function openRuleDetail(id) {
+  const rules = await api('GET', '/api/v1/rules') || [];
+  const r = rules.find(x => x.id === id);
+  if (!r) return;
+  openPanel(`
+    <div class="panel-header">
+      <div>
+        <div class="panel-title">${r.name}</div>
+        <div class="panel-sub">${typeLabel[r.violation_type]||r.violation_type} · v${r.version}</div>
+      </div>
+      <button class="panel-close" onclick="closePanel()">✕</button>
+    </div>
+    <div style="display:flex;gap:8px;margin-bottom:20px">
+      ${badge(r.category)} ${badge(r.is_active?'active':'blocked', r.is_active?'low':'high')}
+    </div>
+    <div class="detail-row"><span class="detail-key">Описание</span><span class="detail-value" style="text-align:left">${r.description||'—'}</span></div>
+    <div style="margin-bottom:20px"></div>
+    <div class="section-title">Параметры</div>
+    <pre style="font-size:12px;color:var(--fg2);overflow-x:auto;background:var(--bg3);padding:12px;border-radius:7px;margin:0 0 20px">${JSON.stringify(r.parameters,null,2)}</pre>
+    <div style="display:flex;gap:8px">
+      <button class="btn btn-${r.is_active?'danger':'primary'} btn-sm" onclick="toggleRule(${r.id},${r.is_active});closePanel()">
+        ${r.is_active?'Деактивировать':'Активировать'}
+      </button>
+      <button class="btn btn-secondary btn-sm" onclick="closePanel()">Закрыть</button>
+    </div>`);
+}
+
+async function toggleRule(id, isActive) {
+  try {
+    await api('PATCH', `/api/v1/rules/${id}`, { is_active: !isActive });
+    toast(isActive ? 'Правило деактивировано' : 'Правило активировано');
+    pageRules();
+  } catch(e) { toast(e.message, 'error'); }
+}
+
+function openCreateRule() {
+  openPanel(`
+    <div class="panel-header">
+      <div>
+        <div class="panel-title">Новое правило</div>
+        <div class="panel-sub">Добавить детектор нарушений</div>
+      </div>
+      <button class="panel-close" onclick="closePanel()">✕</button>
+    </div>
+    <div class="field"><label>Название</label><input id="rName" placeholder="Bot Detection v2"></div>
+    <div class="field">
+      <label>Тип нарушения</label>
+      <select id="rType">
+        <option value="trading_robot">Trading Robot</option>
+        <option value="multiaccounting">Multi-Accounting</option>
+        <option value="news_trading">News Trading</option>
+        <option value="margin_overuse">Margin Overuse</option>
+        <option value="hedge_between_accounts">Hedge Between Accounts</option>
+        <option value="promo_abuse">Promo Abuse</option>
+      </select>
+    </div>
+    <div class="field">
+      <label>Категория</label>
+      <select id="rCat">
+        <option value="hard">Hard</option>
+        <option value="soft">Soft</option>
+        <option value="risk_pattern">Risk Pattern</option>
+      </select>
+    </div>
+    <div class="field">
+      <label>Описание</label>
+      <input id="rDesc" placeholder="Краткое описание правила">
+    </div>
+    <div class="field">
+      <label>Параметры (JSON)</label>
+      <textarea id="rParams" style="font-family:var(--font-mono,'JetBrains Mono',monospace);font-size:12px"
+      >{\n  "min_trades": 20,\n  "threshold": 0.9\n}</textarea>
+    </div>
+    <div style="display:flex;gap:8px">
+      <button class="btn btn-primary" onclick="saveNewRule()">Создать</button>
+      <button class="btn btn-secondary" onclick="closePanel()">Отмена</button>
+    </div>`);
+}
+
+async function saveNewRule() {
+  try {
+    const params = JSON.parse(document.getElementById('rParams').value);
+    await api('POST', '/api/v1/rules', {
+      name: document.getElementById('rName').value,
+      violation_type: document.getElementById('rType').value,
+      category: document.getElementById('rCat').value,
+      description: document.getElementById('rDesc').value,
+      parameters: params,
+      is_active: true,
+    });
+    toast('Правило создано');
+    closePanel(); pageRules();
+  } catch(e) { toast(e.message, 'error'); }
+}
+
+// ═══════════════════════════════════════════════════════════
+// GRAPH VIEW
+// ═══════════════════════════════════════════════════════════
+async function pageGraph() {
+  setTopbar('Граф связей аккаунтов');
+  const links = [
+    { a:'ACC003', b:'ACC008', w:0.85, reasons:['same_kyc_name','same_ip','same_card_bin'], confirmed:true  },
+    { a:'ACC007', b:'ACC004', w:0.65, reasons:['same_device_fingerprint','same_ip'], confirmed:false },
+  ];
+  const nodes = {
+    ACC001:{score:18,level:'low'},ACC002:{score:5,level:'low'},
+    ACC003:{score:85,level:'critical'},ACC004:{score:65,level:'high'},
+    ACC005:{score:42,level:'medium'},ACC006:{score:92,level:'critical'},
+    ACC007:{score:68,level:'high'},ACC008:{score:81,level:'critical'},
+  };
+
+  const W=560, H=340, cx=W/2, cy=H/2;
+  const positions = {
+    ACC001:{x:80,y:80},  ACC002:{x:80,y:260},
+    ACC003:{x:200,y:170},ACC008:{x:360,y:170},
+    ACC004:{x:280,y:80}, ACC007:{x:440,y:80},
+    ACC005:{x:480,y:260},ACC006:{x:280,y:290},
+  };
+
+  const edges = links.map(l => {
+    const a=positions[l.a], b=positions[l.b];
+    const col = l.confirmed ? 'var(--critical)' : 'var(--high)';
+    return `<line x1="${a.x}" y1="${a.y}" x2="${b.x}" y2="${b.y}"
+      stroke="${col}" stroke-width="${l.w*4}" stroke-dasharray="${l.confirmed?'':'6 3'}" opacity=".8"/>
+    <text x="${(a.x+b.x)/2}" y="${(a.y+b.y)/2-4}" text-anchor="middle" font-size="10"
+      fill="${col}" font-family="Inter,sans-serif">${(l.w*100).toFixed(0)}%</text>`;
+  }).join('');
+
+  const nodesSvg = Object.entries(positions).map(([login, {x,y}]) => {
+    const sc = nodes[login]?.score||0;
+    const lv = nodes[login]?.level||'low';
+    const col = scoreColor(sc);
+    return `
+      <circle cx="${x}" cy="${y}" r="22" fill="var(--bg3)" stroke="${col}" stroke-width="2.5"/>
+      <text x="${x}" y="${y-4}" text-anchor="middle" font-size="10" font-weight="600"
+        fill="${col}" font-family="'JetBrains Mono',monospace">${login}</text>
+      <text x="${x}" y="${y+10}" text-anchor="middle" font-size="13" font-weight="700"
+        fill="${col}" font-family="Inter,sans-serif">${sc}</text>`;
+  }).join('');
+
+  const linkCards = links.map(l => `
+    <div style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:14px;margin-bottom:10px">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+        <span style="font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--info)">${l.a}</span>
+        <span style="color:var(--fg2);font-size:11px">──── ${(l.w*100).toFixed(0)}% ────</span>
+        <span style="font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--info)">${l.b}</span>
+      </div>
+      <div style="display:flex;flex-wrap:wrap;gap:5px;margin-bottom:8px">
+        ${l.reasons.map(r=>`<span class="chip">${r}</span>`).join('')}
+      </div>
+      <span class="badge ${l.confirmed?'confirmed':'in_review'}">${l.confirmed?'Подтверждено':'На проверке'}</span>
+    </div>`).join('');
+
+  document.getElementById('pageContent').innerHTML = `
+    <div style="display:grid;grid-template-columns:1fr 320px;gap:16px;align-items:start">
+      <div style="background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:18px">
+        <div class="section-title">Граф связей</div>
+        <svg viewBox="0 0 ${W} ${H}" style="width:100%;max-width:${W}px;height:auto;display:block">
+          <rect width="${W}" height="${H}" fill="var(--bg3)" rx="8"/>
+          ${edges}
+          ${nodesSvg}
+        </svg>
+        <div style="display:flex;gap:16px;margin-top:14px;font-size:12px;color:var(--fg2)">
+          <span><span style="color:var(--critical)">─── </span>Подтверждено</span>
+          <span><span style="color:var(--high)">- - - </span>На проверке</span>
+        </div>
+      </div>
+      <div>
+        <div class="section-title">Связанные пары</div>
+        ${linkCards}
+      </div>
+    </div>`;
+}
+
+// ═══════════════════════════════════════════════════════════
+// TOPBAR HELPER
+// ═══════════════════════════════════════════════════════════
+function setTopbar(title, actions = '') {
+  const main = document.getElementById('mainArea');
+  if (!main) return;
+  const existing = main.querySelector('.topbar');
+  if (existing) existing.remove();
+  const tb = document.createElement('div');
+  tb.className = 'topbar';
+  tb.innerHTML = `<h1>${title}</h1><div class="topbar-actions">${actions}</div>`;
+  main.insertBefore(tb, main.querySelector('.content'));
+}
+
+// ═══════════════════════════════════════════════════════════
+// BOOT
+// ═══════════════════════════════════════════════════════════
+render();
+</script>
+</body>
+</html>
