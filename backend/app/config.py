@@ -4,10 +4,10 @@ from functools import lru_cache
 
 class Settings(BaseSettings):
     app_env: str = "development"
-    secret_key: str = "dev_secret_key_change_in_prod"
+    secret_key: str  # required, set SECRET_KEY in .env
     log_level: str = "INFO"
 
-    database_url: str = "postgresql+asyncpg://antifrod:antifrod_secret@localhost:5432/antifrod"
+    database_url: str = "postgresql+asyncpg://antifrod:change_me@localhost:5432/antifrod"
     redis_url: str = "redis://localhost:6379/0"
 
     match_trader_api_url: str = ""

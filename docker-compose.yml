@@ -6,7 +6,7 @@ services:
     environment:
       POSTGRES_DB: antifrod
       POSTGRES_USER: antifrod
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-antifrod_secret}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD must be set in .env}
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./backend/db/init.sql:/docker-entrypoint-initdb.d/init.sql
@@ -20,7 +20,7 @@ services:
 
   redis:
     image: redis:7-alpine
-    command: redis-server --requirepass ${REDIS_PASSWORD:-redis_secret}
+    command: redis-server --requirepass ${REDIS_PASSWORD:?REDIS_PASSWORD must be set in .env}
     volumes:
       - redis_data:/data
     ports:
@@ -37,8 +37,8 @@ services:
       dockerfile: Dockerfile
     env_file: .env
     environment:
-      DATABASE_URL: postgresql+asyncpg://antifrod:${POSTGRES_PASSWORD:-antifrod_secret}@postgres:5432/antifrod
-      REDIS_URL: redis://:${REDIS_PASSWORD:-redis_secret}@redis:6379/0
+      DATABASE_URL: postgresql+asyncpg://antifrod:${POSTGRES_PASSWORD:?POSTGRES_PASSWORD must be set in .env}@postgres:5432/antifrod
+      REDIS_URL: redis://:${REDIS_PASSWORD:?REDIS_PASSWORD must be set in .env}@redis:6379/0
     volumes:
       - ./backend:/app
       - ./frontend:/app/frontend
@@ -58,8 +58,8 @@ services:
       dockerfile: Dockerfile
     env_file: .env
     environment:
-      DATABASE_URL: postgresql+asyncpg://antifrod:${POSTGRES_PASSWORD:-antifrod_secret}@postgres:5432/antifrod
-      REDIS_URL: redis://:${REDIS_PASSWORD:-redis_secret}@redis:6379/0
+      DATABASE_URL: postgresql+asyncpg://antifrod:${POSTGRES_PASSWORD:?POSTGRES_PASSWORD must be set in .env}@postgres:5432/antifrod
+      REDIS_URL: redis://:${REDIS_PASSWORD:?REDIS_PASSWORD must be set in .env}@redis:6379/0
     volumes:
       - ./backend:/app
       - ml_models:/app/models_storage
@@ -76,8 +76,8 @@ services:
       dockerfile: Dockerfile
     env_file: .env
     environment:
-      DATABASE_URL: postgresql+asyncpg://antifrod:${POSTGRES_PASSWORD:-antifrod_secret}@postgres:5432/antifrod
-      REDIS_URL: redis://:${REDIS_PASSWORD:-redis_secret}@redis:6379/0
+      DATABASE_URL: postgresql+asyncpg://antifrod:${POSTGRES_PASSWORD:?POSTGRES_PASSWORD must be set in .env}@postgres:5432/antifrod
+      REDIS_URL: redis://:${REDIS_PASSWORD:?REDIS_PASSWORD must be set in .env}@redis:6379/0
     volumes:
       - ./backend:/app
     depends_on:
